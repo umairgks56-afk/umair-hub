@@ -1,0 +1,16 @@
+import { FileUp, Search, FolderOpen, FileText, Presentation, Image, MoreHorizontal, Plus } from "lucide-react";
+import "../globals.css";
+
+const files = [
+  { name: "Anatomy — Lecture 01.pdf", type: "PDF", size: "4.8 MB", updated: "Just now", icon: FileText },
+  { name: "Physiology Presentation.pptx", type: "PPTX", size: "2.1 MB", updated: "Yesterday", icon: Presentation },
+  { name: "Handwritten Notes.jpg", type: "Image", size: "1.4 MB", updated: "2 days ago", icon: Image },
+];
+
+export default function Library() {
+  return <main className="min-h-screen bg-[#f7f8fc] text-slate-950"><div className="mx-auto max-w-6xl p-6 md:p-10"><header className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-slate-400">UMAIR HUB</p><h1 className="mt-2 text-3xl font-black tracking-tight">My Library</h1><p className="mt-2 text-sm text-slate-500">Upload your material once. Use it across notes, quizzes, tests and presentations.</p></div><button className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-extrabold text-white shadow-lg transition hover:-translate-y-0.5"><Plus size={17}/> Upload material</button></header>
+  <div className="mt-8 rounded-3xl border-2 border-dashed border-slate-200 bg-white p-10 text-center transition hover:border-slate-300"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-slate-100"><FileUp size={24}/></div><h2 className="mt-4 text-lg font-black">Drop your study material here</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">PDF, PPTX, DOCX, images and more. Your material becomes a searchable knowledge base for UMAIR HUB.</p><button className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold hover:bg-slate-50">Choose files</button></div>
+  <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><h2 className="text-xl font-black">Recent material</h2><div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400"><Search size={16}/><span>Search files...</span></div></div>
+  <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">{files.map(({name,type,size,updated,icon:Icon})=><div key={name} className="group flex items-center gap-4 border-b border-slate-100 p-4 last:border-0 hover:bg-slate-50"><div className="grid size-11 shrink-0 place-items-center rounded-xl bg-slate-100"><Icon size={19}/></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-extrabold">{name}</p><p className="mt-1 text-xs text-slate-400">{type} · {size} · {updated}</p></div><button className="rounded-lg p-2 text-slate-400 opacity-0 transition hover:bg-white hover:text-slate-900 group-hover:opacity-100"><MoreHorizontal size={18}/></button></div>)}</div>
+  <div className="mt-6 rounded-2xl bg-slate-950 p-5 text-white"><div className="flex items-center gap-3"><FolderOpen size={19}/><p className="text-sm font-extrabold">Next: build your course knowledge base</p></div><p className="mt-2 text-xs leading-5 text-slate-400">Once files are uploaded, UMAIR HUB will extract and organize their content so every AI feature can work from the same source.</p></div></div></main>;
+}
