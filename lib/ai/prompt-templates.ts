@@ -1,0 +1,6 @@
+export const studyPrompts = {
+  notes: (source: string, style = "exam-focused") => `Create ${style} study notes from the source below. Preserve important facts, definitions, formulas, examples and relationships. Do not invent information. Use headings and concise bullets. SOURCE:\n${source}`,
+  mcqs: (source: string, count = 20, difficulty = "mixed") => `Generate ${count} multiple-choice questions from the source below at ${difficulty} difficulty. Return valid JSON with question, four options, correctAnswer, explanation, and sourceReference when available. Cover the material broadly and avoid duplicates. Do not use outside facts. SOURCE:\n${source}`,
+  tutor: (source: string, question: string) => `Answer the student's question using ONLY the supplied source. If the answer cannot be verified from the source, say so. Explain clearly for a student and include the relevant source reference when available.\nQUESTION: ${question}\nSOURCE:\n${source}`,
+  presentation: (source: string, topic: string, slides = 10) => `Create an academic presentation outline about "${topic}" using ONLY the supplied source. Produce ${slides} slides with title, key points, suggested visual, and speaker notes. Avoid unsupported claims. SOURCE:\n${source}`,
+};
