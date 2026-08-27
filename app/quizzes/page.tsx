@@ -1,0 +1,15 @@
+import { Brain, CheckCircle2, Clock3, Sparkles, Trophy, ArrowRight } from "lucide-react";
+import "../globals.css";
+
+const sets = [
+  { title: "Anatomy — Chapter 1", questions: 50, accuracy: "—", difficulty: "Mixed" },
+  { title: "Physiology — Cell", questions: 25, accuracy: "—", difficulty: "Medium" },
+  { title: "Chemistry — Lecture 03", questions: 100, accuracy: "—", difficulty: "Hard" },
+];
+
+export default function Quizzes() {
+  return <main className="min-h-screen bg-[#f7f8fc] text-slate-950"><div className="mx-auto max-w-6xl p-6 md:p-10"><header><p className="text-xs font-bold uppercase tracking-[.16em] text-slate-400">Practice engine</p><h1 className="mt-2 text-3xl font-black tracking-tight">Quizzes & MCQs</h1><p className="mt-2 text-sm text-slate-500">Generate source-grounded questions, practice weak areas and build large question banks.</p></header>
+<div className="mt-8 grid gap-4 sm:grid-cols-3"><div className="rounded-2xl bg-white p-5 border border-slate-200"><Brain size={20}/><p className="mt-4 text-2xl font-black">0</p><p className="text-xs text-slate-400">Questions attempted</p></div><div className="rounded-2xl bg-white p-5 border border-slate-200"><CheckCircle2 size={20}/><p className="mt-4 text-2xl font-black">—</p><p className="text-xs text-slate-400">Average accuracy</p></div><div className="rounded-2xl bg-slate-950 p-5 text-white"><Trophy size={20}/><p className="mt-4 text-2xl font-black">0%</p><p className="text-xs text-slate-400">Exam readiness</p></div></div>
+<div className="mt-8 rounded-3xl bg-white border border-slate-200 p-6 md:p-8"><div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.14em] text-slate-400"><Sparkles size={15}/> AI quiz builder</div><h2 className="mt-3 text-2xl font-black">Build a test from your material</h2><div className="mt-6 grid gap-3 sm:grid-cols-3"><button className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><b>10 Questions</b><p className="mt-1 text-xs text-slate-400">Quick practice</p></button><button className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><b>50 Questions</b><p className="mt-1 text-xs text-slate-400">Focused test</p></button><button className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><b>1000+ Questions</b><p className="mt-1 text-xs text-slate-400">Build a question bank</p></button></div><button className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-extrabold text-white">Generate quiz <ArrowRight size={16}/></button></div>
+<h2 className="mt-10 text-xl font-black">Question banks</h2><div className="mt-4 grid gap-4 md:grid-cols-3">{sets.map(s=><article key={s.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h3 className="font-extrabold">{s.title}</h3><div className="mt-4 flex items-center justify-between text-xs text-slate-400"><span>{s.questions} questions</span><span>{s.difficulty}</span></div><div className="mt-5 flex items-center gap-2 text-xs font-bold"><Clock3 size={14}/> Accuracy: {s.accuracy}</div></article>)}</div></div></main>;
+}
