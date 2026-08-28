@@ -19,3 +19,19 @@ export async function GET(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ materials: data ?? [] });
 }
+
+export async function DELETE(request: Request) {
+  const user = await userFromRequest(request);
+  if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const body = await request.json().catch(() => null);
+  const materialId = typeof body?.materialId === "string" ? body.materialId : "";
+  if (!materialId) return NextResponse.json({ error: "materialId is required." }, { status: 400 });
+  const supabase = createSupabaseAdminClient();
+  const { data: material, error: lookupError } = await supabase.from("materials").select("id,storage_path").eq("id", materialId).eq("user_id", user.id).single();
+  if (lookupError || !material) return NextResponse.json({ error: "Material not found." }, { status: 404 });
+  const { error: removeError } = await supabase.storage.from("study-materials").remove([material.storage_path]);
+  if (removeError) return NextResponse.json({ error: `Storage deletion failed: ${removeError.message}` }, { status: 502 });
+  const { error } = await supabase.from("materials").delete().eq("id", materialId).eq("user_id", user.id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
