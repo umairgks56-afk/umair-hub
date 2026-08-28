@@ -12,15 +12,19 @@ async function authenticatedUser(request: Request) {
   return data.user ?? null;
 }
 
+function cleanJson(value: string) { return value.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim(); }
 function parseQuestions(value: string) {
   try {
-    const parsed = JSON.parse(value.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim());
+    const parsed = JSON.parse(cleanJson(value));
     const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.questions) ? parsed.questions : [];
-    return list.filter((item: unknown) => {
-      if (!item || typeof item !== "object") return false;
-      const x = item as Record<string, unknown>;
-      return typeof x.question === "string" && Array.isArray(x.options) && x.options.length === 4 && x.options.every((o) => typeof o === "string") && typeof x.correctAnswer === "number" && x.correctAnswer >= 0 && x.correctAnswer < 4;
-    });
+    return list.filter((item: unknown) => { if (!item || typeof item !== "object") return false; const x = item as Record<string, unknown>; return typeof x.question === "string" && Array.isArray(x.options) && x.options.length === 4 && x.options.every((o) => typeof o === "string") && typeof x.correctAnswer === "number" && x.correctAnswer >= 0 && x.correctAnswer < 4; });
+  } catch { return []; }
+}
+function parseSlides(value: string) {
+  try {
+    const parsed = JSON.parse(cleanJson(value));
+    const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.slides) ? parsed.slides : [];
+    return list.filter((item: unknown) => { if (!item || typeof item !== "object") return false; const x = item as Record<string, unknown>; return typeof x.title === "string" && Array.isArray(x.keyPoints) && x.keyPoints.every((p) => typeof p === "string") && typeof x.visual === "string" && typeof x.speakerNotes === "string"; });
   } catch { return []; }
 }
 
@@ -41,9 +45,10 @@ export async function POST(request: Request) {
       if (material.status !== "ready" || !material.extracted_text?.trim()) return NextResponse.json({ error: "This material is not ready for generation yet." }, { status: 409 });
       source = material.extracted_text.trim(); courseId = material.course_id;
     }
-
     if (!source) return NextResponse.json({ error: "Study material is required." }, { status: 400 });
+    if (!courseId && body?.courseId) return NextResponse.json({ error: "Course not found." }, { status: 404 });
     if (source.length > 120000) source = source.slice(0, 120000);
+
     const prompt = buildStudyPrompt(body.action, source, body.options ?? {});
     const result = await getTextProvider().generate({ prompt, temperature: 0.2 });
 
@@ -59,6 +64,15 @@ export async function POST(request: Request) {
       const { data: quiz, error } = await supabase.from("quizzes").insert({ user_id: user.id, course_id: courseId, title: body.title?.trim() || "AI Practice Quiz", questions, question_count: questions.length }).select("id,title,questions,question_count,created_at").single();
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ action: body.action, result: JSON.stringify(questions), questions, quiz });
+    }
+
+    if (body.action === "presentation" && courseId) {
+      const slides = parseSlides(result);
+      if (!slides.length) return NextResponse.json({ error: "The AI returned an invalid presentation structure. Please try again." }, { status: 502 });
+      const title = body.title?.trim() || body.options?.topic?.trim() || "AI Study Presentation";
+      const { data: presentation, error } = await supabase.from("presentations").insert({ user_id: user.id, course_id: courseId, material_id: body.materialId || null, title, slides }).select("id,title,course_id,material_id,slides,created_at,updated_at").single();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ action: body.action, result, presentation });
     }
 
     return NextResponse.json({ action: body.action, result });
