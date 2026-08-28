@@ -1,26 +1,32 @@
 import OpenAI from "openai";
+import { getEdenAITextProvider } from "./eden";
 
 export interface TextGenerationInput { prompt: string; system?: string; temperature?: number; }
 export interface ImageGenerationInput { prompt: string; size?: string; }
 export interface TextProvider { generate(input: TextGenerationInput): Promise<string>; }
 export interface ImageProvider { generate(input: ImageGenerationInput): Promise<{ url: string }>; }
 
-/** xAI is OpenAI-compatible. Keep XAI_API_KEY server-side. */
 export function getTextProvider(): TextProvider {
+  const provider = process.env.AI_TEXT_PROVIDER ?? "eden";
+  if (provider === "eden") return getEdenAITextProvider();
+  if (provider !== "xai") throw new Error(`Unsupported text provider: ${provider}`);
+
   const key = process.env.XAI_API_KEY;
   if (!key) throw new Error("XAI_API_KEY is not configured.");
   const client = new OpenAI({ apiKey: key, baseURL: process.env.XAI_BASE_URL || "https://api.x.ai/v1" });
-  return { async generate(input) {
-    const response = await client.chat.completions.create({
-      model: process.env.XAI_MODEL || "grok-3-mini",
-      temperature: input.temperature ?? 0.3,
-      messages: [
-        { role: "system", content: input.system || "You are UMAIR HUB, a helpful academic AI. Ground answers in supplied source material when provided." },
-        { role: "user", content: input.prompt },
-      ],
-    });
-    return response.choices[0]?.message?.content || "";
-  }};
+  return {
+    async generate(input) {
+      const response = await client.chat.completions.create({
+        model: process.env.XAI_MODEL || "grok-3-mini",
+        temperature: input.temperature ?? 0.3,
+        messages: [
+          { role: "system", content: input.system || "You are UMAIR HUB, a helpful academic AI. Ground answers in supplied source material when provided." },
+          { role: "user", content: input.prompt },
+        ],
+      });
+      return response.choices[0]?.message?.content || "";
+    },
+  };
 }
 
 /** Image provider is intentionally configurable; no provider is assumed to be permanently free. */
