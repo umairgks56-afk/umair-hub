@@ -1,31 +1,33 @@
 import OpenAI from "openai";
-import type { ImageGenerationInput, TextGenerationInput, TextProvider } from "./providers";
+import type { ImageGenerationInput, TextGenerationInput, TextProvider, ImageProvider } from "./providers";
 
-const xai = () => new OpenAI({ apiKey: process.env.XAI_API_KEY, baseURL: process.env.XAI_BASE_URL ?? "https://api.x.ai/v1" });
+const xai = () => {
+  if (!process.env.XAI_API_KEY) throw new Error("XAI_API_KEY is not configured.");
+  return new OpenAI({ apiKey: process.env.XAI_API_KEY, baseURL: process.env.XAI_BASE_URL ?? "https://api.x.ai/v1" });
+};
 
 export function getXAITextProvider(): TextProvider {
-  return {
-    async generate(input: TextGenerationInput) {
-      if (!process.env.XAI_API_KEY) throw new Error("XAI_API_KEY is not configured.");
-      const response = await xai().chat.completions.create({
-        model: process.env.XAI_MODEL ?? "grok-3-mini",
-        temperature: input.temperature ?? 0.2,
-        messages: [
-          ...(input.system ? [{ role: "system" as const, content: input.system }] : []),
-          { role: "user", content: input.prompt },
-        ],
-      });
-      return response.choices[0]?.message?.content ?? "";
-    },
-  };
+  return { async generate(input: TextGenerationInput) {
+    const response = await xai().chat.completions.create({ model: process.env.XAI_MODEL ?? "grok-4.6", temperature: input.temperature ?? 0.2, messages: [ ...(input.system ? [{ role: "system" as const, content: input.system }] : []), { role: "user", content: input.prompt } ] });
+    return response.choices[0]?.message?.content ?? "";
+  }};
+}
+
+export function getXAIImageProvider(): ImageProvider {
+  return { async generate(input: ImageGenerationInput) {
+    const response = await xai().images.generate({ model: process.env.XAI_IMAGE_MODEL ?? "grok-imagine-image-2.0", prompt: input.prompt, size: input.size as any });
+    const url = response.data?.[0]?.url;
+    if (!url) throw new Error("xAI did not return an image URL.");
+    return { url };
+  }};
 }
 
 export function getConfiguredTextProvider(): TextProvider {
-  const provider = process.env.AI_TEXT_PROVIDER ?? "xai";
-  if (provider === "xai") return getXAITextProvider();
-  throw new Error(`Unsupported text provider: ${provider}`);
+  if ((process.env.AI_TEXT_PROVIDER ?? "xai") === "xai") return getXAITextProvider();
+  throw new Error(`Unsupported text provider: ${process.env.AI_TEXT_PROVIDER}`);
 }
 
-export function imageInput(input: ImageGenerationInput) {
-  return { prompt: input.prompt, size: input.size ?? "1024x1024" };
+export function getConfiguredImageProvider(): ImageProvider {
+  if ((process.env.AI_IMAGE_PROVIDER ?? "xai") === "xai") return getXAIImageProvider();
+  throw new Error(`Unsupported image provider: ${process.env.AI_IMAGE_PROVIDER}`);
 }
