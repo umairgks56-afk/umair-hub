@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+
+async function getUser(request: Request) { const auth=request.headers.get("authorization"); if(!auth?.startsWith("Bearer "))return null; const {data}=await createSupabaseAdminClient().auth.getUser(auth.slice(7)); return data.user??null; }
+export async function GET(request:Request){const user=await getUser(request);if(!user)return NextResponse.json({error:"Authentication required."},{status:401});const supabase=createSupabaseAdminClient();const {data:quizzes,error:q}=await supabase.from("quizzes").select("id,title,course_id,questions,question_count,created_at").eq("user_id",user.id).order("created_at",{ascending:false});if(q)return NextResponse.json({error:q.message},{status:500});const {data:attempts,error:a}=await supabase.from("study_attempts").select("id,quiz_id,score,correct,attempted,completed_at").eq("user_id",user.id).order("completed_at",{ascending:false});if(a)return NextResponse.json({error:a.message},{status:500});return NextResponse.json({quizzes:quizzes??[],attempts:attempts??[]});}
