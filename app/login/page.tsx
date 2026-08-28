@@ -26,12 +26,24 @@ export default function LoginPage() {
     window.location.href = "/";
   }
 
+  async function signInWithGoogle() {
+    setLoading(true);
+    setMessage("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) { setLoading(false); setMessage(error.message); }
+  }
+
   return (
     <main className="grid min-h-screen place-items-center bg-[#f6f7fb] p-5 text-slate-950">
       <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-900/[.05] sm:p-9">
         <div className="flex items-center gap-3"><div className="grid size-11 place-items-center rounded-2xl bg-slate-950 text-white"><Sparkles size={18}/></div><div><p className="font-black">UMAIR HUB</p><p className="text-xs text-slate-400">Personal AI workspace</p></div></div>
         <div className="mt-8"><h1 className="text-2xl font-black">{mode === "login" ? "Welcome back" : "Create your account"}</h1><p className="mt-2 text-sm leading-6 text-slate-500">{mode === "login" ? "Sign in to continue your study workspace." : "Start turning your study material into everything you need."}</p></div>
-        <form onSubmit={submit} className="mt-7 space-y-4">
+        <button type="button" onClick={signInWithGoogle} disabled={loading} className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 font-extrabold text-slate-700 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md disabled:opacity-60"><span className="grid size-6 place-items-center rounded-full bg-white text-sm font-black">G</span>Continue with Google</button>
+        <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-300"><span className="h-px flex-1 bg-slate-200"/>or<span className="h-px flex-1 bg-slate-200"/></div>
+        <form onSubmit={submit} className="space-y-4">
           {mode === "signup" && <label className="block text-sm font-bold">Full name<input value={name} onChange={e=>setName(e.target.value)} required className="mt-2 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-slate-500"/></label>}
           <label className="block text-sm font-bold">Email<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required className="mt-2 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-slate-500"/></label>
           <label className="block text-sm font-bold">Password<input type="password" minLength={6} value={password} onChange={e=>setPassword(e.target.value)} required className="mt-2 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-slate-500"/></label>
