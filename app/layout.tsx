@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthNav from "./components/AuthNav";
 
 export const metadata: Metadata = {
   title: "UMAIR HUB",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><AuthNav />{children}</body>
     </html>
   );
 }
