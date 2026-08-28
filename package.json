@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
@@ -27,6 +27,8 @@
     "typescript": "latest",
     "tailwindcss": "latest",
     "@tailwindcss/postcss": "latest",
-    "postcss": "latest"
+    "postcss": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest"
   }
 }
