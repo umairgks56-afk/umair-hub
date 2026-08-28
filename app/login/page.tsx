@@ -1,38 +1,36 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { BookOpen, Loader2, Sparkles } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next")?.startsWith("/") ? searchParams.get("next")! : "/";
+  const authError = searchParams.get("error");
   const supabase = createSupabaseBrowserClient();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(authError ? "Google sign-in could not be completed. Please try again." : "");
 
   async function submit(event: FormEvent) {
-    event.preventDefault();
-    setLoading(true);
-    setMessage("");
+    event.preventDefault(); setLoading(true); setMessage("");
     const result = mode === "login"
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
     setLoading(false);
     if (result.error) return setMessage(result.error.message);
     if (mode === "signup" && !result.data.session) return setMessage("Account created. Check your email to confirm your account, then sign in.");
-    window.location.href = "/";
+    window.location.assign(next);
   }
 
   async function signInWithGoogle() {
-    setLoading(true);
-    setMessage("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
+    setLoading(true); setMessage("");
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` } });
     if (error) { setLoading(false); setMessage(error.message); }
   }
 
