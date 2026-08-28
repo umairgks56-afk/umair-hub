@@ -45,6 +45,13 @@ export async function POST(request: Request) {
       if (material.status !== "ready" || !material.extracted_text?.trim()) return NextResponse.json({ error: "This material is not ready for generation yet." }, { status: 409 });
       source = material.extracted_text.trim(); courseId = material.course_id;
     }
+
+    if (courseId) {
+      const { data: course, error: courseError } = await supabase.from("courses").select("id").eq("id", courseId).eq("user_id", user.id).maybeSingle();
+      if (courseError) return NextResponse.json({ error: courseError.message }, { status: 500 });
+      if (!course) return NextResponse.json({ error: "Course not found." }, { status: 404 });
+    }
+
     if (!source) return NextResponse.json({ error: "Study material is required." }, { status: 400 });
     if (!courseId && body?.courseId) return NextResponse.json({ error: "Course not found." }, { status: 404 });
     if (source.length > 120000) source = source.slice(0, 120000);
