@@ -3,12 +3,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const ALLOWED = new Set([
   "application/pdf",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
-  "image/png",
-  "image/jpeg",
-  "image/webp",
 ]);
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -25,7 +21,7 @@ export async function POST(request: Request) {
   const courseId = String(form.get("courseId") ?? "");
   if (!(file instanceof File) || !courseId) return NextResponse.json({ error: "file and courseId are required." }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "File exceeds the 50 MB limit." }, { status: 413 });
-  if (!ALLOWED.has(file.type)) return NextResponse.json({ error: "Unsupported file type." }, { status: 415 });
+  if (!ALLOWED.has(file.type)) return NextResponse.json({ error: "Unsupported file type. Upload PDF, DOCX or TXT files." }, { status: 415 });
 
   const { data: course } = await supabase.from("courses").select("id").eq("id", courseId).eq("user_id", userData.user.id).maybeSingle();
   if (!course) return NextResponse.json({ error: "Course not found." }, { status: 404 });
