@@ -5,7 +5,9 @@ export async function extractDocument(file: File): Promise<ExtractedDocument> {
   const type = file.type || "application/octet-stream";
   if (type === "text/plain" || file.name.endsWith(".txt")) return { name: file.name, type, text: buffer.toString("utf8") };
   if (type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-    const pdf = (await import("pdf-parse")).default;
+    const pdfModule = await import("pdf-parse");
+    const pdf = typeof pdfModule === "function" ? pdfModule : (pdfModule as unknown as { default?: (data: Buffer) => Promise<{ text: string }> }).default;
+    if (!pdf) throw new Error("Unable to load PDF parser.");
     const result = await pdf(buffer);
     return { name: file.name, type, text: result.text, pages: [{ page: 1, text: result.text }] };
   }
