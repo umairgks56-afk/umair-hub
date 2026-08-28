@@ -1,60 +1,19 @@
 create extension if not exists pgcrypto;
+create extension if not exists vector;
 
-create table if not exists profiles (
-  id uuid primary key,
-  name text,
-  email text,
-  created_at timestamptz not null default now()
-);
+create table if not exists profiles (id uuid primary key references auth.users(id) on delete cascade, name text, email text, created_at timestamptz not null default now());
+create table if not exists courses (id uuid primary key default gen_random_uuid(), user_id uuid not null references profiles(id) on delete cascade, title text not null, code text, created_at timestamptz not null default now());
+create table if not exists materials (id uuid primary key default gen_random_uuid(), course_id uuid not null references courses(id) on delete cascade, name text not null, mime_type text not null, size_bytes bigint not null default 0, storage_key text not null, extracted_text text, status text not null default 'uploaded' check (status in ('uploaded','processing','ready','failed')), created_at timestamptz not null default now());
+create table if not exists material_chunks (id uuid primary key default gen_random_uuid(), material_id uuid not null references materials(id) on delete cascade, chunk_index int not null, content text not null, embedding vector(1536), page_number int, created_at timestamptz not null default now());
+create table if not exists notes (id uuid primary key default gen_random_uuid(), course_id uuid not null references courses(id) on delete cascade, title text not null, content text not null, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table if not exists quizzes (id uuid primary key default gen_random_uuid(), course_id uuid not null references courses(id) on delete cascade, title text not null, question_count integer not null default 0, questions jsonb not null default '[]', created_at timestamptz not null default now());
+create table if not exists study_attempts (id uuid primary key default gen_random_uuid(), quiz_id uuid not null references quizzes(id) on delete cascade, user_id uuid not null references profiles(id) on delete cascade, score numeric not null default 0, correct integer not null default 0, attempted integer not null default 0, completed_at timestamptz not null default now());
+create index if not exists courses_user_id_idx on courses(user_id); create index if not exists materials_course_id_idx on materials(course_id); create index if not exists chunks_material_id_idx on material_chunks(material_id); create index if not exists notes_course_id_idx on notes(course_id); create index if not exists attempts_user_id_idx on study_attempts(user_id);
 
-create table if not exists courses (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references profiles(id) on delete cascade,
-  title text not null,
-  code text,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists materials (
-  id uuid primary key default gen_random_uuid(),
-  course_id uuid not null references courses(id) on delete cascade,
-  name text not null,
-  mime_type text not null,
-  size_bytes bigint not null default 0,
-  storage_key text not null,
-  extracted_text text,
-  status text not null default 'uploaded' check (status in ('uploaded','processing','ready','failed')),
-  created_at timestamptz not null default now()
-);
-
-create table if not exists notes (
-  id uuid primary key default gen_random_uuid(),
-  course_id uuid not null references courses(id) on delete cascade,
-  title text not null,
-  content text not null,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists quizzes (
-  id uuid primary key default gen_random_uuid(),
-  course_id uuid not null references courses(id) on delete cascade,
-  title text not null,
-  question_count integer not null default 0,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists study_attempts (
-  id uuid primary key default gen_random_uuid(),
-  quiz_id uuid not null references quizzes(id) on delete cascade,
-  user_id uuid not null references profiles(id) on delete cascade,
-  score numeric not null default 0,
-  correct integer not null default 0,
-  attempted integer not null default 0,
-  completed_at timestamptz not null default now()
-);
-
-create index if not exists courses_user_id_idx on courses(user_id);
-create index if not exists materials_course_id_idx on materials(course_id);
-create index if not exists notes_course_id_idx on notes(course_id);
-create index if not exists attempts_user_id_idx on study_attempts(user_id);
+alter table profiles enable row level security; alter table courses enable row level security; alter table materials enable row level security; alter table notes enable row level security; alter table quizzes enable row level security; alter table study_attempts enable row level security;
+create policy "profile owner" on profiles for all using (id=auth.uid()) with check (id=auth.uid());
+create policy "course owner" on courses for all using (user_id=auth.uid()) with check (user_id=auth.uid());
+create policy "material owner" on materials for all using (exists(select 1 from courses c where c.id=course_id and c.user_id=auth.uid())) with check (exists(select 1 from courses c where c.id=course_id and c.user_id=auth.uid()));
+create policy "note owner" on notes for all using (exists(select 1 from courses c where c.id=course_id and c.user_id=auth.uid())) with check (exists(select 1 from courses c where c.id=course_id and c.user_id=auth.uid()));
+create policy "quiz owner" on quizzes for all using (exists(select 1 from courses c where c.id=course_id and c.user_id=auth.uid())) with check (exists(select 1 from courses c where c.id=course_id and c.user_id=auth.uid()));
+create policy "attempt owner" on study_attempts for all using (user_id=auth.uid()) with check (user_id=auth.uid());
