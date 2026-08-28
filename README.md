@@ -42,3 +42,5 @@ UMAIR HUB will be built as a modular, provider-agnostic application. AI provider
 8. Viva, presentation practice and study planning
 9. Multimodal features and teacher mode
 10. Collaboration, optimization and production hardening
+
+<!-- Deployment sync marker: 2026-08-28 -->
